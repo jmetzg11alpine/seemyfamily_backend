@@ -5,17 +5,21 @@ def create_new_relative(data, profile_person):
     relation = data.get('relation')
     name = data.get('name')
 
-    return Person.objects.create(
+    relations, ids_to_update = relations_for_new_relative(relation, profile_person, name)
+
+    new_person = Person.objects.create(
         name=data.get('name'),
         birthdate=data.get('birthdate'),
         birthplace=data.get('birthplace'),
         bio=data.get('bio'),
-        relations=relations_for_new_relative(relation, profile_person, name)
+        relations=relations
     )
+    return set(), new_person
 
 
 def relations_for_new_relative(relation, profile_person, name):
     new_relations = []
+    ids_to_update = []
     new_relation = None
     if relation == 'Sibling' or relation == 'Spouse':
         new_relation = relation
@@ -31,10 +35,16 @@ def relations_for_new_relative(relation, profile_person, name):
     })
 
     for person in profile_person.relations:
-        if relation == 'Sibling' and person['relation'] == 'Sibling':
-            new_relations.append(person)
-
-    return new_relations
+        if person['relation'] == 'Sibling':
+            if relation == 'Parent':
+                new_relations.append({
+                    'id': person['id'],
+                    'relation': 'Child',
+                    'name': person['name']
+                })
+            elif relation == 'Sibling':
+                new_relations.append(person)
+    return new_relations, ids_to_update
 
 
 def add_to_profile_relations(new_person, data):

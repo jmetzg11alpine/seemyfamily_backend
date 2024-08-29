@@ -44,7 +44,7 @@ def add_relative(request):
 
     profile_person = Person.objects.get(id=data.get('profileId'))
 
-    new_person = create_new_relative(data, profile_person)
+    ids_to_update, new_person = create_new_relative(data, profile_person)
 
     profile_person.relations.append(add_to_profile_relations(new_person, data))
     profile_person.save()
