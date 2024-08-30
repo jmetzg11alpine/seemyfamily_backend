@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 from .models import Person, Location, Photos
-from .helpers import create_new_relative, add_to_profile_relations
+from .helpers import create_new_relative, add_relations
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
@@ -44,9 +44,15 @@ def add_relative(request):
 
     profile_person = Person.objects.get(id=data.get('profileId'))
 
-    ids_to_update, new_person = create_new_relative(data, profile_person)
+    new_relative = create_new_relative(data)
 
-    profile_person.relations.append(add_to_profile_relations(new_person, data))
+    profile_person.relations.append({
+        'id': new_relative.id,
+        'name': new_relative.name,
+        'relation': data['relation']
+    })
     profile_person.save()
+
+    add_relations(data, new_relative, profile_person)
 
     return Response({'message': 'Relative added successfully'}, status=status.HTTP_200_OK)
