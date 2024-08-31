@@ -46,13 +46,13 @@ def add_relative(request):
 
     new_relative = create_new_relative(data)
 
+    add_relations(data, new_relative, profile_person)
+
     profile_person.relations.append({
         'id': new_relative.id,
         'name': new_relative.name,
         'relation': data['relation']
     })
     profile_person.save()
-
-    add_relations(data, new_relative, profile_person)
 
     return Response({'message': 'Relative added successfully'}, status=status.HTTP_200_OK)
