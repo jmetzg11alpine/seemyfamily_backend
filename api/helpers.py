@@ -3,20 +3,32 @@ from .models import Person, Location
 
 
 def create_new_relative(data):
+    birthday = data.get('birthdate')
+    birthplace = data.get('birthplace') or ''
+    bio = data.get('bio') or ''
+    if birthday == 'undefined' or birthday == '':
+        birthday = None
+
     person = Person.objects.create(
         name=data.get('name'),
-        birthdate=data.get('birthdate'),
-        birthplace=data.get('birthplace'),
-        bio=data.get('bio'),
+        birthdate=birthday,
+        birthplace=birthplace,
+        bio=bio,
     )
 
     location_name = data.get('location')
+    lat, lng = data.get('lat'), data.get('lng')
     if location_name:
+        try:
+            lat, lng = float(lat), float(lng)
+        except ValueError:
+            lat, lng = None, None,
+
         Location.objects.create(
             person=person,
             name=location_name,
-            lat=data.get('lat'),
-            lng=data.get('lng')
+            lat=lat,
+            lng=lng
         )
 
     return person
@@ -48,6 +60,7 @@ def add_relations(data, new_relative, profile_person):
         relative_relation = relative['relation']
 
         # relations for new relative
+        print(f'relative_relation: {relative_relation} profile_relation: {profile_relation}')
         if relative_relation == 'Parent' and profile_relation == 'Sibling':
             new_relations.append(relative)
         elif relative_relation == 'Sibling' and profile_relation in ['Parent', 'Sibling']:
@@ -59,11 +72,11 @@ def add_relations(data, new_relative, profile_person):
         elif relative_relation == 'Child' and profile_relation in ['Child', 'Spouse']:
             new_relations.append(
                 create_relation_entry(
-                    relative, 'Sibling' if profile_relation == 'Child' else 'Parent'
+                    relative, 'Child' if profile_relation == 'Spouse' else 'Sibling'
                 )
             )
         elif relative_relation == 'Spouse' and profile_relation == 'Child':
-            new_relations.append(create_relation_entry(relative, 'Parent'))
+            new_relations.append(create_relation_entry(relative, 'Spouse'))
 
         # prepare for reverse additon of relatives
         if relative_relation == 'Sibling' and profile_relation == 'Parent':
