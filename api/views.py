@@ -27,6 +27,7 @@ def get_profile_data(request):
     location = person.location.first()
 
     profile_data = {
+        'id': person.id,
         'name': person.name,
         'birthdate': person.birthdate,
         'birthplace': person.birthplace,
@@ -40,7 +41,8 @@ def get_profile_data(request):
 
 @api_view(['POST'])
 def add_relative(request):
-    data = request.data
+    data = request.data['newProfile']
+    print(data)
 
     profile_person = Person.objects.get(id=data.get('profileId'))
 
@@ -56,3 +58,27 @@ def add_relative(request):
     profile_person.save()
 
     return Response({'message': 'Relative added successfully'}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def get_all_relatives(request):
+    data = request.data
+
+    profile_relations = Person.objects.filter(id=data.get('id')).values('relations').first()
+    relation_ids = {relation['id'] for relation in profile_relations['relations']}
+
+    possible_relatives = Person.objects.exclude(id__in=relation_ids).values('id', 'name')
+    relative_options = [
+        {'id': person['id'], 'value': person['name'], 'label': person['name']}
+        for person in possible_relatives
+    ]
+
+    return Response({'relative_options': relative_options}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def update_details(request):
+    data = request.data
+    print(data)
+
+    return Response({'message': f'{data.name} was updated'})
