@@ -16,8 +16,8 @@ class Person(models.Model):
 class Location(models.Model):
     person = models.ForeignKey(Person, related_name='location', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    lat = models.FloatField()
-    lng = models.FloatField()
+    lat = models.FloatField(blank=True, null=True)
+    lng = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.lat}, {self.lng})"

@@ -16,22 +16,34 @@ def create_new_relative(data):
         bio=bio,
     )
 
+    add_location(data, person)
+
+    return person
+
+
+def add_location(data, person):
     location_name = data.get('location')
     lat, lng = data.get('lat'), data.get('lng')
     if location_name:
         try:
             lat, lng = float(lat), float(lng)
-        except ValueError:
+        except (TypeError, ValueError):
             lat, lng = None, None,
 
-        Location.objects.create(
+        location, created = Location.objects.get_or_create(
             person=person,
-            name=location_name,
-            lat=lat,
-            lng=lng
+            defaults={
+                'name': location_name,
+                'lat': lat,
+                'lng': lng
+            }
         )
 
-    return person
+        if not created:
+            location.name = location_name
+            location.lat = lat
+            location.lng = lng
+            location.save()
 
 
 def add_relations(data, new_relative, profile_person):

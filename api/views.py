@@ -3,13 +3,14 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 from .models import Person, Location, Photos
-from .helpers import create_new_relative, add_relations
+from .helpers import create_new_relative, add_location, add_relations
+
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
 def hello_view(request):
     print('i was called')
-    return Response({'data': 'hello'})
+    return Response({'data': 'backend is running'})
 
 
 @api_view(['GET'])
@@ -25,6 +26,7 @@ def get_profile_data(request):
 
     person = Person.objects.get(id=person_id)
     location = person.location.first()
+    print(location)
 
     profile_data = {
         'id': person.id,
@@ -33,7 +35,9 @@ def get_profile_data(request):
         'birthplace': person.birthplace,
         'bio': person.bio,
         'relations': person.relations,
-        'location': location.name if location else None
+        'location': location.name if location else None,
+        'lat': location.lat if location else None,
+        'lng': location.lng if location else None,
     }
 
     return Response({'profile_data': profile_data}, status=status.HTTP_200_OK)
@@ -64,8 +68,9 @@ def add_relative(request):
 def get_all_relatives(request):
     data = request.data
 
-    profile_relations = Person.objects.filter(id=data.get('id')).values('relations').first()
+    profile_relations = Person.objects.filter(id=data.get('id')).values('id', 'relations').first()
     relation_ids = {relation['id'] for relation in profile_relations['relations']}
+    relation_ids.add(profile_relations['id'])
 
     possible_relatives = Person.objects.exclude(id__in=relation_ids).values('id', 'name')
     relative_options = [
@@ -79,6 +84,15 @@ def get_all_relatives(request):
 @api_view(['POST'])
 def update_details(request):
     data = request.data
-    print(data)
+    profile_data = data.get('profileData')
+    print(profile_data)
+    person = Person.objects.filter(id=profile_data.get('id')).first()
 
-    return Response({'message': f'{data.name} was updated'})
+    for key in ['name', 'birthdate', 'birthplace', 'bio']:
+        setattr(person, key, profile_data.get(key))
+
+    add_location(profile_data, person)
+
+    person.save()
+
+    return Response({'message': f'{profile_data['name']} was updated'})
