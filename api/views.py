@@ -3,19 +3,19 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 from .models import Person, Location, Photos
-from .helpers import create_new_relative, add_location, add_relations
+from .helpers import create_new_relative, add_location, add_relations, add_one_relative, remove_one_relative
 
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
 def hello_view(request):
-    print('i was called')
+    print('base function "/" was called')
     return Response({'data': 'backend is running'})
 
 
 @api_view(['GET'])
 def get_main_data(request):
-    persons = Person.objects.values('id', 'name', 'birthdate', 'birthplace')
+    persons = Person.objects.select_related('location').values('id', 'name', 'birthdate', 'birthplace', 'location__name')
     return Response({'data': persons})
 
 
@@ -26,7 +26,6 @@ def get_profile_data(request):
 
     person = Person.objects.get(id=person_id)
     location = person.location.first()
-    print(location)
 
     profile_data = {
         'id': person.id,
@@ -46,7 +45,6 @@ def get_profile_data(request):
 @api_view(['POST'])
 def add_relative(request):
     data = request.data['newProfile']
-    print(data)
 
     profile_person = Person.objects.get(id=data.get('profileId'))
 
@@ -85,13 +83,18 @@ def get_all_relatives(request):
 def update_details(request):
     data = request.data
     profile_data = data.get('profileData')
-    print(profile_data)
     person = Person.objects.filter(id=profile_data.get('id')).first()
 
     for key in ['name', 'birthdate', 'birthplace', 'bio']:
         setattr(person, key, profile_data.get(key))
 
     add_location(profile_data, person)
+
+    if 'person_add' in profile_data:
+        add_one_relative(person, profile_data)
+
+    if 'relation_remove' in profile_data:
+        remove_one_relative(person, profile_data['relation_remove'])
 
     person.save()
 

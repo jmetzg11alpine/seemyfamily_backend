@@ -46,14 +46,16 @@ def add_location(data, person):
             location.save()
 
 
-def add_relations(data, new_relative, profile_person):
-    def get_inverse_relation(relation):
+def get_inverse_relation(relation):
         if relation == 'Parent':
             return 'Child'
         elif relation == 'Child':
             return 'Parent'
         else:
             return relation
+
+
+def add_relations(data, new_relative, profile_person):
 
     def create_relation_entry(person_dict, relation):
         return {
@@ -72,9 +74,10 @@ def add_relations(data, new_relative, profile_person):
         relative_relation = relative['relation']
 
         # relations for new relative
-        print(f'relative_relation: {relative_relation} profile_relation: {profile_relation}')
         if relative_relation == 'Parent' and profile_relation == 'Sibling':
             new_relations.append(relative)
+        if relative_relation == 'Parent' and profile_relation == 'Parent':
+            new_relations.append(create_relation_entry(relative, 'Spouse'))
         elif relative_relation == 'Sibling' and profile_relation in ['Parent', 'Sibling']:
             new_relations.append(
                 create_relation_entry(
@@ -88,7 +91,7 @@ def add_relations(data, new_relative, profile_person):
                 )
             )
         elif relative_relation == 'Spouse' and profile_relation == 'Child':
-            new_relations.append(create_relation_entry(relative, 'Spouse'))
+            new_relations.append(create_relation_entry(relative, 'Parent'))
 
         # prepare for reverse additon of relatives
         if relative_relation == 'Sibling' and profile_relation == 'Parent':
@@ -97,10 +100,11 @@ def add_relations(data, new_relative, profile_person):
                     {'id': new_relative.id, 'name': new_relative.name}, 'Parent'
                 )
             )
-        elif relative_relation == 'Parent' and profile_relation == 'Sibling':
+        elif relative_relation == 'Parent' and profile_relation in ['Sibling', 'Parent']:
             relations_to_add[relative['id']].append(
                 create_relation_entry(
-                    {'id': new_relative.id, 'name': new_relative.name}, 'Child'
+                    {'id': new_relative.id, 'name': new_relative.name},
+                    'Child' if profile_relation == 'Sibling' else 'Spouse'
                 )
             )
         elif relative_relation == 'Child' and profile_relation in ['Child', 'Spouse']:
@@ -129,3 +133,41 @@ def reverse_add_relatives(relations):
         for entry in relations[id]:
             person.relations.append(entry)
         person.save()
+
+
+def add_one_relative(edit_person, profile_data):
+    new_relative_id = profile_data['person_add']['id']
+    new_relative_relation = profile_data['relation_add']['value']
+
+    new_relative_instance = Person.objects.filter(id=new_relative_id).first()
+
+    new_relative = {
+        'id': new_relative_id,
+        'name': new_relative_instance.name,
+        'relation': new_relative_relation
+    }
+    edit_person.relations.append(new_relative)
+
+    new_relation = get_inverse_relation(new_relative_relation)
+
+    new_relative_instance.relations.append({
+        'id': edit_person.id,
+        'name': edit_person.name,
+        'relation': new_relation
+    })
+    new_relative_instance.save()
+
+
+def remove_one_relative(person, id_to_remove):
+    def remove_person(person, id_to_remove):
+        relations_to_keep = []
+        for relation in person.relations:
+            if relation['id'] != id_to_remove:
+                relations_to_keep.append(relation)
+        person.relations = relations_to_keep
+
+    remove_person(person, id_to_remove)
+
+    other_relative = Person.objects.filter(id=id_to_remove).first()
+    remove_person(other_relative, person.id)
+    other_relative.save()
