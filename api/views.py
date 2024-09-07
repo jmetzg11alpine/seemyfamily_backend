@@ -2,8 +2,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework import status
-from .models import Person, Location, Photos
-from .helpers import create_new_relative, add_location, add_relations, add_one_relative, remove_one_relative
+from .models import Person, Photo
+from .helpers import create_new_relative, add_location, add_relations, add_one_relative, remove_one_relative, get_photo, add_photo
 
 
 @api_view(['GET'])
@@ -26,6 +26,7 @@ def get_profile_data(request):
 
     person = Person.objects.get(id=person_id)
     location = person.location.first()
+    photo = Photo.objects.filter(person=person, profile_pic=True).first()
 
     profile_data = {
         'id': person.id,
@@ -37,6 +38,7 @@ def get_profile_data(request):
         'location': location.name if location else None,
         'lat': location.lat if location else None,
         'lng': location.lng if location else None,
+        'photo': get_photo(photo)
     }
 
     return Response({'profile_data': profile_data}, status=status.HTTP_200_OK)
@@ -51,6 +53,9 @@ def add_relative(request):
     new_relative = create_new_relative(data)
 
     add_relations(data, new_relative, profile_person)
+
+    if data['photo_base64']:
+        add_photo(new_relative, True, data['photo_base64'])
 
     profile_person.relations.append({
         'id': new_relative.id,

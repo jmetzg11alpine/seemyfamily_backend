@@ -1,5 +1,10 @@
 from collections import defaultdict
-from .models import Person, Location
+from .models import Person, Location, Photo
+import base64
+import time
+from PIL import Image
+from io import BytesIO
+import os
 
 
 def create_new_relative(data):
@@ -47,12 +52,12 @@ def add_location(data, person):
 
 
 def get_inverse_relation(relation):
-        if relation == 'Parent':
-            return 'Child'
-        elif relation == 'Child':
-            return 'Parent'
-        else:
-            return relation
+    if relation == 'Parent':
+        return 'Child'
+    elif relation == 'Child':
+        return 'Parent'
+    else:
+        return relation
 
 
 def add_relations(data, new_relative, profile_person):
@@ -171,3 +176,34 @@ def remove_one_relative(person, id_to_remove):
     other_relative = Person.objects.filter(id=id_to_remove).first()
     remove_person(other_relative, person.id)
     other_relative.save()
+
+
+def get_photo(photo):
+    if not photo:
+        file_path = 'api/data/photos/default.jpeg'
+    else:
+        file_path = os.path.join('api/data/photos', photo.file_path)
+    with open(file_path, 'rb') as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+
+def add_photo(person, profile_pic, photo_base64):
+    if photo_base64.startswith('data:image'):
+        photo_base64 = photo_base64.split(',')[1]
+    image_data = base64.b64decode(photo_base64)
+    image = Image.open(BytesIO(image_data))
+    max_size = (800, 800)
+    image.thumbnail(max_size, Image.Resampling.LANCZOS)
+    file_path = f'{person.id}/{int(time.time())}.jpeg'
+
+    full_path = os.path.join('api/data/photos', file_path)
+
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+    image.save(full_path, format='JPEG')
+
+    Photo.objects.create(
+        person=person,
+        file_path=file_path,
+        profile_pic=profile_pic
+    )
