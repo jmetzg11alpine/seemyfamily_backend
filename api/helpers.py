@@ -1,5 +1,7 @@
-from collections import defaultdict
+from django.core.files.base import ContentFile
+from django.conf import settings
 from .models import Person, Location, Photo
+from collections import defaultdict
 import base64
 import time
 from PIL import Image
@@ -99,10 +101,11 @@ def add_relations(data, new_relative, profile_person):
             new_relations.append(create_relation_entry(relative, 'Parent'))
 
         # prepare for reverse additon of relatives
-        if relative_relation == 'Sibling' and profile_relation == 'Parent':
+        if relative_relation == 'Sibling' and profile_relation in ['Parent', 'Sibling']:
             relations_to_add[relative['id']].append(
                 create_relation_entry(
-                    {'id': new_relative.id, 'name': new_relative.name}, 'Parent'
+                    {'id': new_relative.id, 'name': new_relative.name},
+                    'Parent' if profile_relation == 'Parent' else 'Sibling'
                 )
             )
         elif relative_relation == 'Parent' and profile_relation in ['Sibling', 'Parent']:
@@ -180,30 +183,33 @@ def remove_one_relative(person, id_to_remove):
 
 def get_photo(photo):
     if not photo:
-        file_path = 'api/data/photos/default.jpeg'
+        return settings.MEDIA_URL + 'default.jpeg'
     else:
-        file_path = os.path.join('api/data/photos', photo.file_path)
-    with open(file_path, 'rb') as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return settings.MEDIA_URL + photo.file_path.name
 
 
-def add_photo(person, profile_pic, photo_base64):
+def add_photo(person_id, profile_pic, photo_base64, description):
     if photo_base64.startswith('data:image'):
         photo_base64 = photo_base64.split(',')[1]
+
     image_data = base64.b64decode(photo_base64)
     image = Image.open(BytesIO(image_data))
+
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+
+    relative_path = os.path.join(str(person_id), str(time.time()) + '.jpeg')
+
     max_size = (800, 800)
     image.thumbnail(max_size, Image.Resampling.LANCZOS)
-    file_path = f'{person.id}/{int(time.time())}.jpeg'
 
-    full_path = os.path.join('api/data/photos', file_path)
-
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-
-    image.save(full_path, format='JPEG')
+    image_io = BytesIO()
+    image.save(image_io, format='JPEG')
+    image_content = ContentFile(image_io.getvalue(), relative_path)
 
     Photo.objects.create(
-        person=person,
-        file_path=file_path,
+        person_id=person_id,
+        description=description,
+        file_path=image_content,
         profile_pic=profile_pic
     )

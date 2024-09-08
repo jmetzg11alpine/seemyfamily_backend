@@ -54,8 +54,8 @@ def add_relative(request):
 
     add_relations(data, new_relative, profile_person)
 
-    if data['photo_base64']:
-        add_photo(new_relative, True, data['photo_base64'])
+    if 'photo_base64' in data:
+        add_photo(new_relative.id, True, data['photo_base64'], None)
 
     profile_person.relations.append({
         'id': new_relative.id,
@@ -104,3 +104,34 @@ def update_details(request):
     person.save()
 
     return Response({'message': f'{profile_data['name']} was updated'})
+
+
+@api_view(['POST'])
+def upload_photo(request):
+    data = request.data
+    profile_id = data.get('profileId')
+    description = data.get('description', None)
+    photo_base64 = data.get('photo_base64')
+
+    profile_pic = Photo.objects.filter(person_id=profile_id).count() <= 0
+
+    add_photo(profile_id, profile_pic, photo_base64, description)
+
+    return Response({'message': f'photo uploaded for id: {profile_id}'})
+
+
+@api_view(['POST'])
+def get_photos(request):
+    data = request.data
+    profile_id = data.get('profileId')
+
+    all_photos = Photo.objects.filter(person_id=profile_id)
+    photos = []
+    for photo in all_photos:
+        photos.append({
+            'src': get_photo(photo),
+            'description': photo.description,
+            'profile_pic': photo.profile_pic
+        })
+
+    return Response({'photos': photos})

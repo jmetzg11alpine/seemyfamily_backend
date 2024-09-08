@@ -8,4 +8,6 @@ urlpatterns = [
     path('add_relative', add_relative, name='add_relative'),
     path('get_all_relatives', get_all_relatives, name='get_all_relatives'),
     path('update_details', update_details, name='update_details'),
+    path('upload_photo', upload_photo, name='upload_photo'),
+    path('get_photos', get_photos, name='get_photos'),
 ]

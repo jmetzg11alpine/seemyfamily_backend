@@ -25,7 +25,7 @@ class Location(models.Model):
 class Photo(models.Model):
     person = models.ForeignKey(Person, related_name='photos', on_delete=models.CASCADE)
     description = models.CharField(max_length=255, blank=True, null=True)
-    file_path = models.CharField(max_length=255, blank=True, null=True)
+    file_path = models.ImageField(upload_to='photos/', blank=True, null=True)
     profile_pic = models.BooleanField(default=False)
 
     def __str__(self):
