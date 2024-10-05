@@ -7,3 +7,7 @@ media/*
 !media/photos/
 media/photos/*
 !media/photos/default.jpeg
+
+dev_setup.sql
+
+seemyfamily.dump
