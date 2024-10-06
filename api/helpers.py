@@ -182,8 +182,10 @@ def remove_one_relative(person, id_to_remove):
 
 
 def get_photo(photo):
+    print(f'media url: {settings.MEDIA_URL}')
+    print(f'media root: {settings.MEDIA_ROOT}')
     if not photo:
-        return settings.MEDIA_URL + 'default.jpeg'
+        return settings.MEDIA_URL + '/photos/default.jpeg'
     else:
         return settings.MEDIA_URL + photo.file_path.name
 
