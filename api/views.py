@@ -14,12 +14,14 @@ def hello_view(request):
 
 
 @api_view(['GET'])
+@renderer_classes([JSONRenderer])
 def get_main_data(request):
     persons = Person.objects.select_related('location').values('id', 'name', 'birthdate', 'birthplace', 'location__name')
     return Response({'data': persons})
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def get_profile_data(request):
     data = request.data
     person_id = data.get('id')
@@ -45,6 +47,7 @@ def get_profile_data(request):
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def add_relative(request):
     data = request.data['newProfile']
 
@@ -68,6 +71,7 @@ def add_relative(request):
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def get_all_relatives(request):
     data = request.data
 
@@ -85,6 +89,7 @@ def get_all_relatives(request):
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def update_details(request):
     data = request.data
     profile_data = data.get('profileData')
@@ -107,6 +112,7 @@ def update_details(request):
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def upload_photo(request):
     data = request.data
     profile_id = data.get('profileId')
@@ -121,6 +127,7 @@ def upload_photo(request):
 
 
 @api_view(['POST'])
+@renderer_classes([JSONRenderer])
 def get_photos(request):
     data = request.data
     profile_id = data.get('profileId')

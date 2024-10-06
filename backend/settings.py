@@ -55,7 +55,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    '*'
+    "http://localhost:3000",
+    "https://seemyfamily.net",
 ]
 
 ROOT_URLCONF = 'backend.urls'
