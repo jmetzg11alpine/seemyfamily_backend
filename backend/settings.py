@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
+MODE = os.getenv('MODE')
+
+print(f'On MODE: {MODE}')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,6 +62,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://seemyfamily.net",
+    "https://backend-small-surf-1752.fly.dev",
+    "https://frontend-patient-sea-1439.fly.dev"
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -86,11 +93,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'seemyfamily',
-        'USER': 'dev',
-        'PASSWORD': 'donkey6',
-        'HOST': 'db',
-        'PORT': '5432',
+        'NAME': os.getenv(f'{MODE}_POSTGRES_NAME'),
+        'USER': os.getenv(f'{MODE}_POSTGRES_USER'),
+        'PASSWORD': os.getenv(f'{MODE}_POSTGRES_PASSWORD'),
+        'HOST': os.getenv(f'{MODE}_POSTGRES_HOST'),
+        'PORT': os.getenv(f'{MODE}_POSTGRES_PORT'),
     }
 }
 

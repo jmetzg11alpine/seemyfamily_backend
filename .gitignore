@@ -8,6 +8,6 @@ media/*
 media/photos/*
 !media/photos/default.jpeg
 
-dev_setup.sql
+.env
 
-seemyfamily.dump
+notes.txt

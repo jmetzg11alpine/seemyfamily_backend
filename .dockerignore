@@ -1,0 +1,13 @@
+# flyctl launch added from .gitignore
+venv
+api/__pycache__
+api/migrations/__pycache__
+backend/__pycache__
+**/data.sql
+**/media/*
+!**/media/photos
+**/media/photos/*
+!**/media/photos/default.jpeg
+
+**/.env
+fly.toml

@@ -9,5 +9,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
+ENV DEBUG=1 \
+    PYTHONUNBUFFERED=1 \
+    DEV_POSTGRES_NAME=seemyfamily \
+    DEV_POSTGRES_USER=postgres \
+    DEV_POSTGRES_PASSWORD=donkey6 \
+    DEV_POSTGRES_HOST=db \
+    DEV_POSTGRES_PORT=5432
+
+EXPOSE 8000
+
+VOLUME ["/app"]
+
 CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
 
