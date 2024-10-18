@@ -1,27 +1,31 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.decorators import api_view, renderer_classes, permission_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 from .models import Person, Photo
 from .helpers import create_new_relative, add_location, add_relations, add_one_relative, remove_one_relative, get_photo, add_photo
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
 
 
 @api_view(['GET'])
-@renderer_classes([JSONRenderer])
 def hello_view(request):
     print('base function "/" was called')
     return Response({'data': 'backend is running'})
 
 
 @api_view(['GET'])
-@renderer_classes([JSONRenderer])
 def get_main_data(request):
     persons = Person.objects.select_related('location').values('id', 'name', 'birthdate', 'birthplace', 'location__name')
-    return Response({'data': persons})
+    user_name = None
+    if request.user.is_authenticated:
+        user_name = request.user.user_name
+
+    return Response({'data': persons, 'userName': user_name})
 
 
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def get_profile_data(request):
     data = request.data
     person_id = data.get('id')
@@ -46,8 +50,8 @@ def get_profile_data(request):
     return Response({'profile_data': profile_data}, status=status.HTTP_200_OK)
 
 
+@permission_classes([IsAuthenticated])
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def add_relative(request):
     data = request.data['newProfile']
 
@@ -71,7 +75,6 @@ def add_relative(request):
 
 
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def get_all_relatives(request):
     data = request.data
 
@@ -88,8 +91,8 @@ def get_all_relatives(request):
     return Response({'relative_options': relative_options}, status=status.HTTP_200_OK)
 
 
+@permission_classes([IsAuthenticated])
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def update_details(request):
     data = request.data
     profile_data = data.get('profileData')
@@ -112,7 +115,6 @@ def update_details(request):
 
 
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def upload_photo(request):
     data = request.data
     profile_id = data.get('profileId')
@@ -127,7 +129,6 @@ def upload_photo(request):
 
 
 @api_view(['POST'])
-@renderer_classes([JSONRenderer])
 def get_photos(request):
     data = request.data
     profile_id = data.get('profileId')
@@ -142,3 +143,26 @@ def get_photos(request):
         })
 
     return Response({'photos': photos})
+
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+# from django.views.decorators.csrf import csrf_exempt
+
+# from django.middleware.csrf import get_token
+
+
+@api_view(['POST'])
+def custom_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(request, username=username, password=password)
+
+    if user is not None:
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'messasge': 'Login Successful',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        })
+    else:
+        return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
