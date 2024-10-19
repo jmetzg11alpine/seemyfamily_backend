@@ -9,59 +9,6 @@ from io import BytesIO
 import os
 
 
-def create_new_relative(data):
-    birthday = data.get('birthdate')
-    birthplace = data.get('birthplace') or ''
-    bio = data.get('bio') or ''
-    if birthday == 'undefined' or birthday == '':
-        birthday = None
-
-    person = Person.objects.create(
-        name=data.get('name'),
-        birthdate=birthday,
-        birthplace=birthplace,
-        bio=bio,
-    )
-
-    add_location(data, person)
-
-    return person
-
-
-def add_location(data, person):
-    location_name = data.get('location')
-    lat, lng = data.get('lat'), data.get('lng')
-    if location_name:
-        try:
-            lat, lng = float(lat), float(lng)
-        except (TypeError, ValueError):
-            lat, lng = None, None,
-
-        location, created = Location.objects.get_or_create(
-            person=person,
-            defaults={
-                'name': location_name,
-                'lat': lat,
-                'lng': lng
-            }
-        )
-
-        if not created:
-            location.name = location_name
-            location.lat = lat
-            location.lng = lng
-            location.save()
-
-
-def get_inverse_relation(relation):
-    if relation == 'Parent':
-        return 'Child'
-    elif relation == 'Child':
-        return 'Parent'
-    else:
-        return relation
-
-
 def add_relations(data, new_relative, profile_person):
 
     def create_relation_entry(person_dict, relation):
@@ -141,53 +88,6 @@ def reverse_add_relatives(relations):
         for entry in relations[id]:
             person.relations.append(entry)
         person.save()
-
-
-def add_one_relative(edit_person, profile_data):
-    new_relative_id = profile_data['person_add']['id']
-    new_relative_relation = profile_data['relation_add']['value']
-
-    new_relative_instance = Person.objects.filter(id=new_relative_id).first()
-
-    new_relative = {
-        'id': new_relative_id,
-        'name': new_relative_instance.name,
-        'relation': new_relative_relation
-    }
-    edit_person.relations.append(new_relative)
-
-    new_relation = get_inverse_relation(new_relative_relation)
-
-    new_relative_instance.relations.append({
-        'id': edit_person.id,
-        'name': edit_person.name,
-        'relation': new_relation
-    })
-    new_relative_instance.save()
-
-
-def remove_one_relative(person, id_to_remove):
-    def remove_person(person, id_to_remove):
-        relations_to_keep = []
-        for relation in person.relations:
-            if relation['id'] != id_to_remove:
-                relations_to_keep.append(relation)
-        person.relations = relations_to_keep
-
-    remove_person(person, id_to_remove)
-
-    other_relative = Person.objects.filter(id=id_to_remove).first()
-    remove_person(other_relative, person.id)
-    other_relative.save()
-
-
-def get_photo(photo):
-    print(f'media url: {settings.MEDIA_URL}')
-    print(f'media root: {settings.MEDIA_ROOT}')
-    if not photo:
-        return settings.MEDIA_URL + 'photos/default.jpeg'
-    else:
-        return settings.MEDIA_URL + photo.file_path.name
 
 
 def add_photo(person_id, profile_pic, photo_base64, description):

@@ -11,3 +11,5 @@ media/photos/*
 .env
 
 notes.txt
+
+api/controllers/__pycache__
