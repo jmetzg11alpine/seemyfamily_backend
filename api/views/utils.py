@@ -1,7 +1,11 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework import status
 from django.core.files.base import ContentFile
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
 from ..models import Photo
+from django.conf import settings
 import base64
 from PIL import Image
 from io import BytesIO
@@ -13,6 +17,30 @@ import os
 def hello_view(request):
     print('base function "/" was called')
     return Response({'data': 'backend is running'})
+
+
+@api_view(['POST'])
+def custom_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(request, username=username, password=password)
+
+    if user is not None:
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'messasge': 'Login Successful',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        })
+    else:
+        return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_photo(photo):
+    if not photo:
+        return settings.MEDIA_URL + 'photos/default.jpeg'
+    else:
+        return settings.MEDIA_URL + photo.file_path.name
 
 
 def get_inverse_relation(relation):

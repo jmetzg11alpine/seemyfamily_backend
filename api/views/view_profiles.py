@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from ..models import Person, Photo
-from django.conf import settings
+from .utils import get_photo
 
 
 @api_view(['GET'])
@@ -13,13 +13,6 @@ def get_main_data(request):
         user_name = request.user.user_name
 
     return Response({'data': persons, 'userName': user_name})
-
-
-def get_photo(photo):
-    if not photo:
-        return settings.MEDIA_URL + 'photos/default.jpeg'
-    else:
-        return settings.MEDIA_URL + photo.file_path.name
 
 
 @api_view(['POST'])

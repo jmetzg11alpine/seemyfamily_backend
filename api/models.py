@@ -35,8 +35,3 @@ class Photo(models.Model):
         if self.profile_pic:
             Photo.objects.filter(person=self.person, profile_pic=True).update(profile_pic=False)
         super().save(*args, **kwargs)
-
-
-
-
-
