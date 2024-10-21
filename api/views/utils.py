@@ -4,6 +4,7 @@ from rest_framework import status
 from django.core.files.base import ContentFile
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from ..models import Photo
 from django.conf import settings
 import base64
@@ -27,13 +28,42 @@ def custom_login(request):
 
     if user is not None:
         refresh = RefreshToken.for_user(user)
-        return Response({
-            'messasge': 'Login Successful',
-            'refresh': str(refresh),
-            'access': str(refresh.access_token)
-        })
+        return Response(
+            {
+                'messasge': 'Login Successful',
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user_name': user.username
+            },
+            status=status.HTTP_200_OK
+        )
     else:
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def check_login_status(request):
+    refresh_token = request.data.get('refresh')
+    if not refresh_token:
+        return Response(
+            {'message': 'Refresh token is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    else:
+        token = RefreshToken(refresh_token)
+        user = User.objects.get(id=token['user_id'])
+        new_access_token = str(token.access_token)
+
+        return Response(
+            {
+                'message': 'User is authenticated',
+                'access': new_access_token,
+                'user_name': user.username
+            },
+            status=status.HTTP_200_OK
+        )
+
 
 
 def get_photo(photo):

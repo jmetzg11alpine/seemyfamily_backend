@@ -35,3 +35,21 @@ class Photo(models.Model):
         if self.profile_pic:
             Photo.objects.filter(person=self.person, profile_pic=True).update(profile_pic=False)
         super().save(*args, **kwargs)
+
+
+class History(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    username = models.CharField(max_length=100)
+    action = models.CharField(max_length=100)
+    recipient = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.username} performed {self.action} on {self.recipient} at {self.created_at}"
+
+
+class Visitor(models.Model):
+    ip_address = models.CharField(max_length=225)
+    date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Visitor from IP {self.ip_address} on {self.date}"

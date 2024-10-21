@@ -13,6 +13,7 @@ def get_photos(request):
     photos = []
     for photo in all_photos:
         photos.append({
+            'id': photo.id,
             'src': get_photo(photo),
             'description': photo.description,
             'profile_pic': photo.profile_pic
