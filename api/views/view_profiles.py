@@ -24,6 +24,9 @@ def get_profile_data(request):
     location = person.location.first()
     photo = Photo.objects.filter(person=person, profile_pic=True).first()
 
+    photo_location = get_photo(photo)
+    print(photo_location)
+
     profile_data = {
         'id': person.id,
         'name': person.name,

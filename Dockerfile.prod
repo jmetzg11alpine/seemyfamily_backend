@@ -9,12 +9,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
+COPY ./media/photos/default.jpeg /default.jpeg
+
 ENV DEBUG=0 \
     PYTHONUNBUFFERED=1
 
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate && gunicorn --workers 3 --bind 0.0.0.0:8000 backend.wsgi:application"]
+CMD ["sh", "-c", "[ ! -f /app/media/photos/default.jpeg ] && cp /default.jpeg /app/media/photos/default.jpeg || echo 'default.jpeg exists'; python manage.py migrate && gunicorn --workers 3 --bind 0.0.0.0:8000 backend.wsgi:application"]
+
 
 

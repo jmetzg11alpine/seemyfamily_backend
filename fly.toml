@@ -21,3 +21,7 @@ primary_region = 'atl'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[mounts]
+  source = "media_volume"
+  destination = "/app/media"

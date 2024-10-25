@@ -65,7 +65,6 @@ def check_login_status(request):
         )
 
 
-
 def get_photo(photo):
     if not photo:
         return settings.MEDIA_URL + 'photos/default.jpeg'
