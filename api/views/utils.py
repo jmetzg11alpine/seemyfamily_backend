@@ -5,7 +5,8 @@ from django.core.files.base import ContentFile
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from ..models import Photo
+from django.utils import timezone
+from ..models import Photo, Visitor
 from django.conf import settings
 import base64
 from PIL import Image
@@ -106,3 +107,19 @@ def add_photo(person_id, profile_pic, photo_base64, description):
         file_path=image_content,
         profile_pic=profile_pic
     )
+
+
+def record_ip(request):
+    x_forward_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forward_for:
+        ip = x_forward_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+
+    lastest_visitor = Visitor.objects.filter(ip_address=ip).order_by('-date').first()
+
+    if lastest_visitor:
+        time_since_last_visit = timezone.now().date() - lastest_visitor.date
+        if time_since_last_visit.days < 1:
+            return
+    Visitor.objects.create(ip_address=ip)

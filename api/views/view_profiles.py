@@ -2,13 +2,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from ..models import Person, Photo
-from .utils import get_photo
+from .utils import get_photo, record_ip
 
 
 @api_view(['GET'])
 def get_main_data(request):
     persons = Person.objects.select_related('location').values('id', 'name', 'birthdate', 'birthplace', 'location__name')
     user_name = None
+    record_ip(request)
     if request.user.is_authenticated:
         user_name = request.user.user_name
 
