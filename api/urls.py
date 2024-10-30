@@ -8,9 +8,10 @@ from .views.utils import hello_view, custom_login, check_login_status
 from .views.view_profiles import (
     get_main_data, get_profile_data, get_all_relatives
 )
-from .views.edit_profiles import UpdateDetails, AddRelative
+from .views.edit_profiles import UpdateDetails, AddRelative, DeleteProfile
 from .views.view_photos import get_photos
 from .views.edit_photos import upload_photo, edit_photo, delete_photo
+from .views.view_info import get_edits
 
 urlpatterns = [
     # utils
@@ -28,6 +29,7 @@ urlpatterns = [
     # edit_profiles
     path('add_relative/', AddRelative.as_view(), name='add_relative'),
     path('update_details/', UpdateDetails.as_view(), name='update_details'),
+    path('delete_profile/', DeleteProfile.as_view(), name='delete_profile'),
 
     # view photos
     path('get_photos/', get_photos, name='get_photos'),
@@ -36,4 +38,7 @@ urlpatterns = [
     path('upload_photo/', upload_photo, name='upload_photo'),
     path('edit_photo/', edit_photo, name='edit_photo'),
     path('delete_photo/', delete_photo, name='delete_photo'),
+
+    # info
+    path('get_edits', get_edits, name='get_edits')
 ]

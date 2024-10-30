@@ -2,9 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
 from ..models import Person, Location
 from .utils import get_inverse_relation, add_photo
 from collections import defaultdict
+import os
 
 
 class AddRelative(APIView):
@@ -14,10 +16,6 @@ class AddRelative(APIView):
         data = request.data['newProfile']
 
         profile_person = Person.objects.get(id=data.get('profileId'))
-        print('PROFILE RELATION ', data['relation'], ' PROFILE NAME ', profile_person.name)
-        print(data['relation'])
-        print('PROFILE PERSON RELATIONS')
-        print(profile_person.relations)
         new_person = self.create_new_relative(data)
 
         self.add_relations(data, new_person, profile_person)
@@ -121,14 +119,15 @@ class AddRelative(APIView):
             elif relative['relation'] == 'Sibling' and profile_relation == 'Sibling':
                 return 'Sibling'
             elif relative['relation'] == 'Parent' and profile_relation in 'Sibling':
-                return 'Sibling'
+                return 'Child'
             elif relative['relation'] == 'Parent' and profile_relation == 'Parent':
                 return 'Spouse'
             elif relative['relation'] == 'Spouse' and profile_relation == 'Child':
                 return 'Child'
             elif relative['relation'] == 'Child' and profile_relation == 'Spouse':
                 return 'Parent'
-            # elif relative['relation']
+            elif relative['relation'] == 'Child' and profile_relation == 'Child':
+                return 'Sibling'
             else:
                 return None
         relation = find_relation()
@@ -183,7 +182,7 @@ class UpdateDetails(APIView):
         )
 
     def update_basic_details(self, person, profile_data):
-        for key in ['name', 'birthday', 'birthplace', 'bio']:
+        for key in ['name', 'birthdate', 'birthplace', 'bio']:
             setattr(person, key, profile_data.get(key))
 
     def update_location(self, person, profile_data):
@@ -248,3 +247,44 @@ class UpdateDetails(APIView):
         removed_relative = Person.objects.filter(id=id_to_remove).first()
         removed_relative.relations = filter_relations(removed_relative.relations, person.id)
         removed_relative.save()
+
+
+class DeleteProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data['profileData']
+        person = Person.objects.filter(id=data['id']).first()
+        name = person.name
+
+        self.remove_relations(person.relations, person.id)
+        self.remove_photos(person)
+
+        person.delete()
+
+        return Response(
+            {'message': f'Profile {name} was deleted'},
+            status=status.HTTP_200_OK
+        )
+
+    def remove_relations(self, relations, id):
+        for relation in relations:
+            relative = Person.objects.filter(id=relation['id']).first()
+            updated_relations = []
+            for r in relative.relations:
+                if r['id'] != id:
+                    updated_relations.append(r)
+            relative.relations = updated_relations
+            relative.save()
+
+    def remove_photos(self, person):
+        photos = person.photos.all()
+
+        for photo in photos:
+            photo_path = os.path.join(settings.MEDIA_ROOT, str(photo.file_path))
+            if os.path.exists(photo_path):
+                os.remove(photo_path)
+
+        person_directory = os.path.join(settings.MEDIA_ROOT, 'photos', str(person.id))
+        if os.path.isdir(person_directory) and not os.listdir(person_directory):
+            os.rmdir(person_directory)
