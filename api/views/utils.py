@@ -116,10 +116,9 @@ def record_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
 
-    lastest_visitor = Visitor.objects.filter(ip_address=ip).order_by('-date').first()
+    today = timezone.now().date()
 
-    if lastest_visitor:
-        time_since_last_visit = timezone.now().date() - lastest_visitor.date
-        if time_since_last_visit.days < 1:
-            return
-    Visitor.objects.create(ip_address=ip)
+    Visitor.objects.get_or_create(
+        ip_address=ip,
+        date=today
+    )

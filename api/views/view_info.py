@@ -16,5 +16,4 @@ def get_edits(request):
             'recipient': item.recipient
         } for item in data
     ]
-    print(data)
     return Response({'data': history_data})
