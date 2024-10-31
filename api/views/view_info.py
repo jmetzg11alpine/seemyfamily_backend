@@ -26,7 +26,6 @@ def get_edits(request):
 @api_view(['POST'])
 def get_visitors(request):
     data = request.data
-    print(data)
 
     if data == 'week':
         days_ago = 7
@@ -61,7 +60,16 @@ def get_visitors(request):
             count = 0
             temp_start += delta
         count += 1
+    group_data[curr_date] = count
 
-    group_data[temp_start] = count
     print(group_data)
-    return Response({'data': [1,2,3]})
+    lables = [key for key in group_data]
+    data = [value for _, value in group_data.items()]
+    return Response(
+        {
+            'data': {
+                'labels': lables,
+                'data': data
+            }
+        }
+    )
