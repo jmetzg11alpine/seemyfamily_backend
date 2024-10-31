@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework_simplejwt.exceptions import TokenError
 from django.core.files.base import ContentFile
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -48,25 +49,34 @@ def check_login_status(request):
     if not refresh_token:
         return Response(
             {'message': 'Refresh token is required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    else:
-        token = RefreshToken(refresh_token)
-        user = User.objects.get(id=token['user_id'])
-        new_access_token = str(token.access_token)
-
-        return Response(
-            {
-                'message': 'User is authenticated',
-                'access': new_access_token,
-                'user_name': user.username
-            },
             status=status.HTTP_200_OK
         )
 
+    else:
+        try:
+            token = RefreshToken(refresh_token)
+            user = User.objects.get(id=token['user_id'])
+            new_access_token = str(token.access_token)
 
-def get_photo(photo):
+            return Response(
+                {
+                    'message': 'User is authenticated',
+                    'access': new_access_token,
+                    'user_name': user.username
+                },
+                status=status.HTTP_200_OK
+            )
+        except TokenError:
+            return Response(
+                {
+                    'message': 'Refresh token did not work'
+                },
+                status=status.HTTP_200_OK
+            )
+
+
+def get_photo(person):
+    photo = Photo.objects.filter(person=person, profile_pic=True).first()
     if not photo:
         return settings.MEDIA_URL + 'photos/default.jpeg'
     else:

@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -7,11 +8,25 @@ from .utils import get_photo, record_ip
 
 @api_view(['GET'])
 def get_main_data(request):
-    persons = Person.objects.select_related('location').values('id', 'name', 'birthdate', 'birthplace', 'location__name')
-    user_name = None
+    persons = []
+    for person in Person.objects.all():
+        try:
+            location = person.location.name
+        except ObjectDoesNotExist:
+            location = None
+
+        person_data = {
+            'id': person.id,
+            'name': person.name,
+            'birthdate': person.birthdate,
+            'birthplace': person.birthplace,
+            'location': location,
+            'photo': get_photo(person)
+        }
+        persons.append(person_data)
+
+    user_name = request.user.username if request.user.is_authenticated else None
     record_ip(request)
-    if request.user.is_authenticated:
-        user_name = request.user.user_name
 
     return Response({'data': persons, 'userName': user_name})
 
@@ -22,8 +37,10 @@ def get_profile_data(request):
     person_id = data.get('id')
 
     person = Person.objects.get(id=person_id)
-    location = person.location.first()
-    photo = Photo.objects.filter(person=person, profile_pic=True).first()
+    try:
+        location = person.location
+    except ObjectDoesNotExist:
+        location = None
 
     profile_data = {
         'id': person.id,
@@ -35,7 +52,7 @@ def get_profile_data(request):
         'location': location.name if location else None,
         'lat': location.lat if location else None,
         'lng': location.lng if location else None,
-        'photo': get_photo(photo)
+        'photo': get_photo(person)
     }
 
     return Response({'profile_data': profile_data}, status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from ..models import Photo
+from django.conf import settings
+from ..models import Photo, Person
 from .utils import get_photo
 
 
@@ -14,7 +15,7 @@ def get_photos(request):
     for photo in all_photos:
         photos.append({
             'id': photo.id,
-            'src': get_photo(photo),
+            'src': settings.MEDIA_URL + photo.file_path.name,
             'description': photo.description,
             'profile_pic': photo.profile_pic
         })
