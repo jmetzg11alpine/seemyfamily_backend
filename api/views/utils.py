@@ -48,7 +48,7 @@ def check_login_status(request):
     refresh_token = request.data.get('refresh')
     if not refresh_token:
         return Response(
-            {'message': 'Refresh token is required'},
+            {'message': 'bad'},
             status=status.HTTP_200_OK
         )
 
@@ -60,7 +60,7 @@ def check_login_status(request):
 
             return Response(
                 {
-                    'message': 'User is authenticated',
+                    'message': 'good',
                     'access': new_access_token,
                     'user_name': user.username
                 },
@@ -69,7 +69,7 @@ def check_login_status(request):
         except TokenError:
             return Response(
                 {
-                    'message': 'Refresh token did not work'
+                    'message': 'bad'
                 },
                 status=status.HTTP_200_OK
             )

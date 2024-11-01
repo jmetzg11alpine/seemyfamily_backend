@@ -53,7 +53,6 @@ def get_visitors(request):
     temp_start = start_date
     for visitor in visitors:
         curr_date = visitor['date']
-        print(curr_date)
 
         while curr_date >= temp_start + delta:
             group_data[temp_start] = count
@@ -62,7 +61,6 @@ def get_visitors(request):
         count += 1
     group_data[curr_date] = count
 
-    print(group_data)
     lables = [key for key in group_data]
     data = [value for _, value in group_data.items()]
     return Response(
