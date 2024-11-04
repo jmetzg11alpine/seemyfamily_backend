@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.utils import timezone
-from ..models import Photo, Visitor
+from ..models import Photo, Visitor, History
 from django.conf import settings
 import base64
 from PIL import Image
@@ -131,4 +131,12 @@ def record_ip(request):
     Visitor.objects.get_or_create(
         ip_address=ip,
         date=today
+    )
+
+
+def add_to_history(username, action, recipient):
+    History.objects.create(
+        username=username,
+        action=action,
+        recipient=recipient
     )

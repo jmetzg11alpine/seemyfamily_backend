@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 from ..models import Person, Location
-from .utils import get_inverse_relation, add_photo
+from .utils import get_inverse_relation, add_photo, add_to_history
 from collections import defaultdict
 import os
 
@@ -21,12 +21,13 @@ class AddRelative(APIView):
         self.add_relations(data, new_person, profile_person)
         self.add_new_relative_photo(data, new_person)
         self.update_profile_person(profile_person, new_person, data)
+        add_to_history(request.user.username, new_person.name, 'created')
 
         # Good for debugging:
-        print(f"PROFILE RELATION: {data['relation']}, PROFILE NAME: {profile_person.name}")
-        print('PROFILE PERSON RELATIONS:')
-        print(profile_person.relations)
-        print(f'PERSON ADDED: {new_person.name}')
+        # print(f"PROFILE RELATION: {data['relation']}, PROFILE NAME: {profile_person.name}")
+        # print('PROFILE PERSON RELATIONS:')
+        # print(profile_person.relations)
+        # print(f'PERSON ADDED: {new_person.name}')
 
         return Response(
             {'message': 'Relative added successfully'},
@@ -143,11 +144,6 @@ class AddRelative(APIView):
             person.relations.extend(relations[person.id])
 
         Person.objects.bulk_update(persons, ['relations'])
-        # for id in relations:
-        #     person = Person.objects.get(id=id)
-        #     for entry in relations[id]:
-        #         person.relations.append(entry)
-        #     person.save()
 
     def add_new_relative_photo(self, data, new_person):
         if 'photo_base64' in data:
@@ -175,6 +171,7 @@ class UpdateDetails(APIView):
         self.update_relations(person, profile_data)
 
         person.save()
+        add_to_history(request.user.username, person.name, 'updated details')
 
         return Response(
             {'message': f'{profile_data['name']} was updated'},
@@ -261,6 +258,7 @@ class DeleteProfile(APIView):
         self.remove_photos(person)
 
         person.delete()
+        add_to_history(request.user.username, name, 'deleted profile')
 
         return Response(
             {'message': f'Profile {name} was deleted'},

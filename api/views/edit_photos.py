@@ -3,8 +3,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
-from ..models import Photo
-from .utils import add_photo
+from ..models import Photo, Person
+from .utils import add_photo, add_to_history
 import os
 
 @api_view(['POST'])
@@ -19,6 +19,9 @@ def upload_photo(request):
 
     add_photo(profile_id, profile_pic, photo_base64, description)
 
+    person = Person.objects.get(id=profile_id)
+    add_to_history(request.user.username, person.name, 'added photo')
+
     return Response({'message': 'photo uploaded', 'profile': profile_pic})
 
 
@@ -32,6 +35,8 @@ def edit_photo(request):
     description = data.get('description')
 
     photo_instance = Photo.objects.get(id=photo_id)
+
+    person_name = photo_instance.person.name
 
     if profile_pic_changed and photo_instance.profile_pic:
         photo_instance.profile_pic = False
@@ -51,6 +56,7 @@ def edit_photo(request):
         photo_instance.description = description
 
     photo_instance.save()
+    add_to_history(request.user.username, person_name, 'edited photot')
 
     return Response({'message': 'photo edited'}, status=status.HTTP_200_OK)
 
@@ -62,6 +68,7 @@ def delete_photo(request):
     photo_id = data.get('id')
 
     photo_instance = Photo.objects.get(id=photo_id)
+    person_name = photo_instance.person.name
 
     if photo_instance.profile_pic:
         other_random_photo = Photo.objects.filter(
@@ -77,5 +84,6 @@ def delete_photo(request):
         os.remove(photo_path)
 
     photo_instance.delete()
+    add_to_history(request.user.username, person_name, 'deleted photo')
 
     return Response({'message': 'photo deleted'}, status=status.HTTP_200_OK)
