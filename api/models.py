@@ -27,6 +27,7 @@ class Photo(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
     file_path = models.ImageField(upload_to='photos/', blank=True, null=True)
     profile_pic = models.BooleanField(default=False)
+    rotation = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.description} ({'Profile Pic' if self.profile_pic else 'Photo'})"

@@ -78,9 +78,9 @@ def check_login_status(request):
 def get_photo(person):
     photo = Photo.objects.filter(person=person, profile_pic=True).first()
     if not photo:
-        return settings.MEDIA_URL + 'photos/default.jpeg'
+        return settings.MEDIA_URL + 'photos/default.jpeg', 0
     else:
-        return settings.MEDIA_URL + photo.file_path.name
+        return settings.MEDIA_URL + photo.file_path.name, photo.rotation
 
 
 def get_inverse_relation(relation):
@@ -134,7 +134,7 @@ def record_ip(request):
     )
 
 
-def add_to_history(username, action, recipient):
+def add_to_history(username, recipient, action):
     History.objects.create(
         username=username,
         action=action,

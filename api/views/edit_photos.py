@@ -33,6 +33,7 @@ def edit_photo(request):
     profile_pic_changed = data.get('profilePicChanged')
     profile_pic = data.get('profile_pic')
     description = data.get('description')
+    rotation = data.get('rotation')
 
     photo_instance = Photo.objects.get(id=photo_id)
 
@@ -51,9 +52,10 @@ def edit_photo(request):
             else:
                 other_random_photo.profile_pic = True
                 other_random_photo.save()
-    else:
-        photo_instance.profile_pic = profile_pic
-        photo_instance.description = description
+
+    photo_instance.profile_pic = profile_pic
+    photo_instance.description = description
+    photo_instance.rotation = rotation
 
     photo_instance.save()
     add_to_history(request.user.username, person_name, 'edited photot')

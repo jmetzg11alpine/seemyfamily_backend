@@ -15,13 +15,16 @@ def get_main_data(request):
         except ObjectDoesNotExist:
             location = None
 
+        photo_path, photo_rotation = get_photo(person)
+
         person_data = {
             'id': person.id,
             'name': person.name,
             'birthdate': person.birthdate,
             'birthplace': person.birthplace,
             'location': location,
-            'photo': get_photo(person)
+            'photo': photo_path,
+            'rotation': photo_rotation
         }
         persons.append(person_data)
 
@@ -42,6 +45,8 @@ def get_profile_data(request):
     except ObjectDoesNotExist:
         location = None
 
+    photo_path, photo_rotation = get_photo(person)
+
     profile_data = {
         'id': person.id,
         'name': person.name,
@@ -52,7 +57,8 @@ def get_profile_data(request):
         'location': location.name if location else None,
         'lat': location.lat if location else None,
         'lng': location.lng if location else None,
-        'photo': get_photo(person)
+        'photo': photo_path,
+        'rotation': photo_rotation
     }
 
     return Response({'profile_data': profile_data}, status=status.HTTP_200_OK)
