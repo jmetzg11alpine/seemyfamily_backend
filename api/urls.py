@@ -11,7 +11,7 @@ from .views.view_profiles import (
 from .views.edit_profiles import UpdateDetails, AddRelative, DeleteProfile
 from .views.view_photos import get_photos
 from .views.edit_photos import upload_photo, edit_photo, delete_photo
-from .views.view_info import get_edits, get_visitors
+from .views.view_info import get_edits, get_visitors, get_geo_data
 
 urlpatterns = [
     # utils
@@ -41,5 +41,6 @@ urlpatterns = [
 
     # info
     path('get_edits', get_edits, name='get_edits'),
-    path('get_visitors/', get_visitors, name='get_visitors')
+    path('get_visitors/', get_visitors, name='get_visitors'),
+    path('get_geo_data', get_geo_data, name='get_geo_data')
 ]

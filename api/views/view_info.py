@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.db.models.functions import TruncDate
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from ..models import History, Visitor
+from ..models import History, Visitor, Location
 from datetime import timedelta
 
 
@@ -71,3 +71,31 @@ def get_visitors(request):
             }
         }
     )
+
+
+@api_view(['POST'])
+def get_geo_data(request):
+    locations = Location.objects.all()
+
+    data = {}
+    for location in locations:
+        if location.lat and location.lng:
+            lat_lng = str(location.lat) + '-' + str(location.lng)
+            if lat_lng in data:
+                data[lat_lng]['person'].append(location.person.name)
+                data[lat_lng]['size'] += 1
+            else:
+                data[lat_lng] = {
+                    'id': location.id,
+                    'name': location.name,
+                    'person': [location.person.name],
+                    'lat': location.lat,
+                    'lng': location.lng,
+                    'size': 1
+                }
+
+    data = [value for _, value in data.items()]
+
+    return Response({
+        'data': data
+    })
