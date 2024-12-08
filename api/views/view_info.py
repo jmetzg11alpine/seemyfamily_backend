@@ -1,10 +1,16 @@
+from django.http import FileResponse
 from django.utils import timezone
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from ..models import History, Visitor, Location
-from datetime import timedelta
+from django.conf import settings
+import zipfile
+from ..models import History, Visitor, Location, Photo
+from datetime import timedelta, datetime
+import tempfile
+import subprocess
+import os
 
 
 @api_view(['POST'])
@@ -99,3 +105,84 @@ def get_geo_data(request):
     return Response({
         'data': data
     })
+
+
+@api_view(['POST'])
+def download_sql(request):
+    MODE = os.getenv('MODE')
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".sql") as temp_file:
+        temp_file_path = temp_file.name
+
+    USER = os.getenv(f'{MODE}_POSTGRES_USER')
+    PASS = os.getenv(f'{MODE}_POSTGRES_PASSWORD')
+    HOST = os.getenv(f'{MODE}_POSTGRES_HOST')
+    NAME = os.getenv(f'{MODE}_POSTGRES_NAME')
+    FILE_NAME = 'seemyfamil_' + datetime.now().strftime('%Y-%m-%d') + '.sql'
+
+    try:
+        env = os.environ.copy()
+        env['PGPASSWORD'] = PASS
+
+        command = [
+            "pg_dump",
+            "-U", USER,
+            "-h", HOST,
+            "-d", NAME,
+            "-F", "p",
+            "-t", "api_history",
+            "-t", "api_location",
+            "-t", "api_person",
+            "-t", "api_photo",
+            "-t", "api_visitor",
+            "-f", temp_file_path
+        ]
+
+        subprocess.run(command, env=env, check=True)
+
+        response = FileResponse(
+            open(temp_file_path, 'rb'),
+            as_attachment=True,
+            filename=FILE_NAME
+        )
+        print(response)
+        return response
+
+    except Exception as e:
+        print(f'Could not download sql: {e}')
+        return Response({'message': f'Could not download sql: {e}'})
+
+def make_readable_path(photo):
+    ending = photo['path'].split('.')[-1]
+    if photo['description']:
+        path = photo['name'] + '/' + photo['description'] + '.' + ending
+    else:
+        unique_numbers = photo['path'].split('.')[-2]
+        path = photo['name'] + '/' + unique_numbers + '.' + ending
+    return path
+
+@api_view(['POST'])
+def download_photos(request):
+    all_photos = [
+        {
+            'path': photo.file_path.name,
+            'description': photo.description,
+            'name': photo.person.name
+        }
+        for photo in Photo.objects.all()
+    ]
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_zip:
+        with zipfile.ZipFile(temp_zip.name, 'w') as zipf:
+            for photo in all_photos:
+                full_path = settings.MEDIA_ROOT + '/' + photo['path']
+                relative_path = make_readable_path(photo)
+                zipf.write(full_path, arcname=relative_path)
+    temp_zip_path = temp_zip.name
+    return FileResponse(
+        open(temp_zip_path, 'rb'),
+        as_attachment=True,
+        filename='photos_zio'
+    )
+    # return Response({'message': 'hello'})
+

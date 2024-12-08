@@ -37,7 +37,7 @@ class AddRelative(APIView):
     def create_new_relative(self, data):
         person = Person.objects.create(
             name=data.get('name'),
-            birthdate=data.get('birthdate', None),
+            birthyear=data.get('birthyear', None),
             birthplace=data.get('birthplace', None),
             bio=data.get('bio', None)
         )
@@ -179,7 +179,7 @@ class UpdateDetails(APIView):
         )
 
     def update_basic_details(self, person, profile_data):
-        for key in ['name', 'birthdate', 'birthplace', 'bio']:
+        for key in ['name', 'birthyear', 'birthplace', 'bio']:
             setattr(person, key, profile_data.get(key))
 
     def update_location(self, person, profile_data):

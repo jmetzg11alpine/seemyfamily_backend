@@ -3,7 +3,7 @@ from django.db import models
 
 class Person(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    birthdate = models.DateField(max_length=255, blank=True, null=True)
+    birthyear = models.PositiveIntegerField(blank=True, null=True)
     birthplace = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     relations = models.JSONField(blank=True, null=True)

@@ -20,7 +20,7 @@ def get_main_data(request):
         person_data = {
             'id': person.id,
             'name': person.name,
-            'birthdate': person.birthdate,
+            'birthyear': person.birthyear,
             'birthplace': person.birthplace,
             'location': location,
             'photo': photo_path,
@@ -50,7 +50,7 @@ def get_profile_data(request):
     profile_data = {
         'id': person.id,
         'name': person.name,
-        'birthdate': person.birthdate,
+        'birthyear': person.birthyear,
         'birthplace': person.birthplace,
         'bio': person.bio,
         'relations': person.relations,

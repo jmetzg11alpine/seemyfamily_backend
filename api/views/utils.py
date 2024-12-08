@@ -77,10 +77,16 @@ def check_login_status(request):
 
 def get_photo(person):
     photo = Photo.objects.filter(person=person, profile_pic=True).first()
+    default_photo_path = 'photos/default.jpeg'
+
     if not photo:
         return settings.MEDIA_URL + 'photos/default.jpeg', 0
-    else:
-        return settings.MEDIA_URL + photo.file_path.name, photo.rotation
+
+    photo_file_path = os.path.join(settings.MEDIA_ROOT, photo.file_path.name)
+    if not os.path.exists(photo_file_path):
+        return settings.MEDIA_URL + default_photo_path, 0
+
+    return settings.MEDIA_URL + photo.file_path.name, photo.rotation
 
 
 def get_inverse_relation(relation):
